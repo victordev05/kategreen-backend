@@ -1,0 +1,96 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model User {
+  id        String   @id @default(uuid())
+  fullName  String
+  email     String?  @unique
+  phone     String   @unique
+  password  String
+  role      String   @default("customer")
+
+  accountStatus String @default("unverified")
+  kycStatus     String @default("pending")
+
+  wallet    Wallet?
+  ledger    Ledger[]
+
+  createdAt DateTime @default(now())
+}
+model Wallet {
+  id               String  @id @default(uuid())
+  userId           String  @unique
+  availableBalance Float   @default(0)
+  pendingBalance   Float   @default(0)
+  frozenBalance    Float   @default(0)
+
+  user User @relation(fields: [userId], references: [id])
+}
+model Ledger {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String
+  amount    Float
+  direction String
+  reference String   @unique
+  status    String   @default("success")
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+model Product {
+  id          String @id @default(uuid())
+  farmerId    String
+  name        String
+  category    String
+  price       Float
+  quantity    Int
+  description String
+
+  createdAt DateTime @default(now())
+}
+model Order {
+  id          String @id @default(uuid())
+  buyerId     String
+  farmerId    String
+  productId   String
+  quantity    Int
+  totalPrice  Float
+
+  status      String @default("pending")
+  escrowStatus String @default("locked")
+
+  createdAt DateTime @default(now())
+}
+model Delivery {
+  id          String @id @default(uuid())
+  orderId     String @unique
+  logisticsId String?
+
+  status      String @default("pending")
+
+  proofUrl    String?
+  notes       String?
+
+  createdAt   DateTime @default(now())
+}
+model User {
+  id        String   @id @default(uuid())
+  fullName  String
+  email     String?  @unique
+  phone     String   @unique
+  password  String
+  role      String   @default("customer")
+
+  accountStatus String @default("unverified")
+  kycStatus     String @default("pending")
+
+  transactionPin String?  // 🔐 ADD THIS
+
+  wallet    Wallet?
+  ledger    Ledger[]
+
+  createdAt DateTime @default(now())
+}
