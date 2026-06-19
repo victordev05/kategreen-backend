@@ -2,46 +2,72 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-model User {
-  id        String   @id @default(uuid())
-  fullName  String
-  email     String?  @unique
-  phone     String   @unique
-  password  String
-  role      String   @default("customer")
 
-  accountStatus String @default("unverified")
-  kycStatus     String @default("pending")
-
-  wallet    Wallet?
-  ledger    Ledger[]
-
-  createdAt DateTime @default(now())
+generator client {
+  provider = "prisma-client-js"
 }
+
+model User {
+  id             String   @id @default(uuid())
+
+  fullName       String
+  email          String?  @unique
+  phone          String   @unique
+  password       String
+
+  role           String   @default("CUSTOMER")
+
+  accountStatus  String   @default("PENDING")
+  kycStatus      String   @default("NOT_SUBMITTED")
+
+  emailVerified  Boolean  @default(false)
+  phoneVerified  Boolean  @default(false)
+
+  transactionPin String?
+
+  profilePhoto   String?
+
+  lastLogin      DateTime?
+
+  wallet         Wallet?
+  ledger         Ledger[]
+
+  buyerOrders    Order[]  @relation("BuyerOrders")
+  farmerOrders   Order[]  @relation("FarmerOrders")
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
 model Wallet {
   id               String  @id @default(uuid())
   userId           String  @unique
+
   availableBalance Float   @default(0)
   pendingBalance   Float   @default(0)
   frozenBalance    Float   @default(0)
 
-  user User @relation(fields: [userId], references: [id])
+  user             User    @relation(fields: [userId], references: [id])
 }
+
 model Ledger {
-  id        String   @id @default(uuid())
-  userId    String
-  type      String
-  amount    Float
-  direction String
-  reference String   @unique
-  status    String   @default("success")
+  id         String   @id @default(uuid())
 
-  user User @relation(fields: [userId], references: [id])
+  userId     String
+  type       String
+  amount     Float
+  direction  String
+  reference  String   @unique
+  status     String   @default("SUCCESS")
 
-  createdAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+
+  createdAt  DateTime @default(now())
 }
+
 model Product {
-  id          String @id @default(uuid())
+  id          String   @id @default(uuid())
+
   farmerId    String
   name        String
   category    String
@@ -49,48 +75,76 @@ model Product {
   quantity    Int
   description String
 
-  createdAt DateTime @default(now())
-}
-model Order {
-  id          String @id @default(uuid())
-  buyerId     String
-  farmerId    String
-  productId   String
-  quantity    Int
-  totalPrice  Float
-
-  status      String @default("pending")
-  escrowStatus String @default("locked")
-
-  createdAt DateTime @default(now())
-}
-model Delivery {
-  id          String @id @default(uuid())
-  orderId     String @unique
-  logisticsId String?
-
-  status      String @default("pending")
-
-  proofUrl    String?
-  notes       String?
-
   createdAt   DateTime @default(now())
 }
-model User {
-  id        String   @id @default(uuid())
-  fullName  String
-  email     String?  @unique
-  phone     String   @unique
-  password  String
-  role      String   @default("customer")
 
-  accountStatus String @default("unverified")
-  kycStatus     String @default("pending")
+model Order {
+  id           String @id @default(uuid())
 
-  transactionPin String?  // 🔐 ADD THIS
+  buyerId      String
+  farmerId     String
+  productId    String
 
-  wallet    Wallet?
-  ledger    Ledger[]
+  quantity     Int
+  totalPrice   Float
 
-  createdAt DateTime @default(now())
+  status       String @default("PENDING")
+  escrowStatus String @default("LOCKED")
+
+  buyer        User   @relation("BuyerOrders", fields: [buyerId], references: [id])
+  farmer       User   @relation("FarmerOrders", fields: [farmerId], references: [id])
+
+  createdAt    DateTime @default(now())
+}
+
+model Delivery {
+  id           String @id @default(uuid())
+
+  orderId      String   @unique
+  logisticsId  String?
+
+  status       String   @default("PENDING")
+
+  proofUrl     String?
+  notes        String?
+
+  createdAt    DateTime @default(now())
+}
+
+model OTP {
+  id         String   @id @default(uuid())
+
+  userId     String?
+
+  email      String?
+  phone      String?
+
+  code       String
+  purpose    String
+
+  expiresAt  DateTime
+  verified   Boolean  @default(false)
+
+  createdAt  DateTime @default(now())
+}
+
+model KYC {
+  id             String   @id @default(uuid())
+
+  userId         String   @unique
+
+  idType         String
+  idNumber       String
+
+  documentFront  String
+  documentBack   String?
+
+  selfie         String
+
+  status         String   @default("PENDING")
+
+  reviewedBy     String?
+  reviewedAt     DateTime?
+
+  createdAt      DateTime @default(now())
 }

@@ -20,3 +20,6 @@ app.use("/api/v1/escrow", escrowRoutes);
 app.use("/api/v1/delivery", deliveryRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/dispute", disputeRoutes);
+const deliveryRoutes = require("./routes/delivery.routes");
+
+app.use("/api/delivery", deliveryRoutes);
